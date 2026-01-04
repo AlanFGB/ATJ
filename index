@@ -8,151 +8,199 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .glass-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .nav-btn.active { color: #818cf8; border-bottom: 2px solid #818cf8; }
+        .glass-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); }
+        .nav-btn.active { color: #6366f1; border-bottom: 2px solid #6366f1; }
+        #setupOverlay { backdrop-filter: blur(12px); }
+        .btn-primary { background-color: #4f46e5; transition: all 0.2s; }
+        .btn-primary:hover { background-color: #4338ca; transform: translateY(-1px); }
     </style>
 </head>
 <body class="text-slate-800">
 
-    <!-- Navegação -->
-    <nav class="bg-[#0f172a] text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="container mx-auto flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 p-2 rounded-lg">
-                    <span class="font-black text-xl tracking-tighter">ATJ</span>
+    <!-- Modal de Configuração Regional (Nó do Sistema) -->
+    <div id="setupOverlay" class="fixed inset-0 bg-slate-900/90 z-[100] flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-slate-200">
+            <div class="text-center mb-8">
+                <div class="bg-indigo-600 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-200">
+                    <i class="fas fa-gavel text-white text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-black text-slate-900 tracking-tight">Identificação do Nó</h2>
+                <p class="text-sm text-slate-500 mt-2">Configure a localização desta comarca para sincronização com a capital.</p>
+            </div>
+            <form id="setupForm" class="space-y-5">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Cidade / Comarca</label>
+                    <input type="text" id="setupCity" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all" placeholder="Nome da cidade" required>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold leading-none">Atualização Trabalhista Judicial</h1>
-                    <span class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold italic">Módulo de Integração Municipal</span>
+                    <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Estado (UF)</label>
+                    <input type="text" id="setupState" maxlength="2" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all uppercase font-bold" placeholder="Ex: SP" required>
+                </div>
+                <button type="submit" class="w-full btn-primary text-white p-4 rounded-xl font-black text-sm uppercase tracking-widest shadow-lg shadow-indigo-100 mt-4">
+                    Ativar Nó Regional
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cabeçalho de Navegação -->
+    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <div class="bg-slate-900 text-white p-2 rounded-lg font-black text-xl px-3">ATJ</div>
+                <div class="border-l border-slate-200 pl-4">
+                    <h1 class="text-sm font-black text-slate-900 leading-none uppercase tracking-tighter">Atualização Trabalhista Judicial</h1>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                        </span>
+                        <span id="locationDisplay" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">Sincronizando Localização...</span>
+                    </div>
                 </div>
             </div>
-            <div class="hidden md:flex space-x-8 text-sm font-medium">
-                <button onclick="switchTab('dashboard')" class="nav-btn active py-2 hover:text-indigo-400 transition">Dashboard</button>
-                <button onclick="switchTab('recrutamento')" class="nav-btn py-2 hover:text-indigo-400 transition">Novos Membros</button>
-                <button onclick="switchTab('vagas')" class="nav-btn py-2 hover:text-indigo-400 transition">Solicitar Vagas</button>
+            
+            <div class="hidden md:flex items-center space-x-1">
+                <button onclick="switchTab('dashboard', this)" class="nav-btn active px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all">Dashboard</button>
+                <button onclick="switchTab('recrutamento', this)" class="nav-btn px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all">Membros</button>
+                <button onclick="switchTab('vagas', this)" class="nav-btn px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all text-indigo-600">Solicitar Vagas</button>
             </div>
-            <div id="authStatus" class="text-[10px] text-slate-500 font-mono">SINCRONIZANDO...</div>
+
+            <div id="authStatus" class="bg-slate-100 px-3 py-1 rounded-full text-[9px] font-black text-slate-400 border border-slate-200 uppercase tracking-tighter">
+                Online
+            </div>
         </div>
     </nav>
 
-    <main class="container mx-auto p-6 max-w-6xl">
+    <main class="container mx-auto p-4 md:p-8 max-w-6xl">
         
         <!-- DASHBOARD -->
         <section id="dashboard" class="tab-content active space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="glass-card p-6 border-l-8 border-indigo-600">
-                    <p class="text-slate-500 text-xs font-bold uppercase">Efetivo Local</p>
-                    <h2 class="text-4xl font-black mt-2 text-slate-900" id="statTotal">0</h2>
+                <div class="glass-card p-6 border-b-4 border-indigo-600">
+                    <div class="flex justify-between items-start">
+                        <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Efetivo Comarca</p>
+                        <i class="fas fa-users text-indigo-100 text-xl"></i>
+                    </div>
+                    <h2 class="text-5xl font-black mt-2 text-slate-900 tracking-tighter" id="statTotal">0</h2>
                 </div>
-                <div class="glass-card p-6 border-l-8 border-emerald-500">
-                    <p class="text-slate-500 text-xs font-bold uppercase">Vagas em Aberto</p>
-                    <h2 class="text-4xl font-black mt-2 text-slate-900" id="statVagas">0</h2>
+                <div class="glass-card p-6 border-b-4 border-emerald-500">
+                    <div class="flex justify-between items-start">
+                        <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Carências Ativas</p>
+                        <i class="fas fa-briefcase text-emerald-100 text-xl"></i>
+                    </div>
+                    <h2 class="text-5xl font-black mt-2 text-slate-900 tracking-tighter" id="statVagas">0</h2>
                 </div>
-                <div class="glass-card p-6 border-l-8 border-amber-500">
-                    <p class="text-slate-500 text-xs font-bold uppercase">Status Cloud</p>
-                    <div class="mt-4 flex items-center gap-2">
-                        <div class="h-3 w-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                        <span class="text-xs font-bold text-slate-600 uppercase" id="lastSyncText">Conectado</span>
+                <div class="glass-card p-6 border-b-4 border-slate-200">
+                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Nó Municipal</p>
+                    <div class="mt-4 flex flex-col">
+                        <span class="cityNameDisplay text-lg font-black text-slate-700 leading-tight">...</span>
+                        <span class="stateDisplay text-xs font-bold text-slate-400 uppercase tracking-widest italic">...</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Tabela Principal -->
-            <div class="glass-card overflow-hidden">
-                <div class="bg-slate-50 p-4 border-b flex justify-between items-center">
-                    <h3 class="font-bold text-slate-700 uppercase text-xs tracking-wider">Registros Ativos</h3>
+            <div class="glass-card overflow-hidden border border-slate-200">
+                <div class="bg-slate-50 p-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 class="font-black text-slate-700 uppercase text-[10px] tracking-widest flex items-center gap-2">
+                        <i class="fas fa-list-ul text-indigo-500"></i> Registros Ativos: <span class="cityNameDisplay">...</span>
+                    </h3>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Atualizado em tempo real</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-100 text-slate-500 text-[10px] uppercase font-bold">
+                        <thead class="bg-white text-slate-400 text-[9px] uppercase font-black tracking-widest border-b border-slate-100">
                             <tr>
-                                <th class="p-4">Membro</th>
-                                <th class="p-4">Cargo Judicial</th>
-                                <th class="p-4">Horário de Trabalho</th>
-                                <th class="p-4 text-center">Ações</th>
+                                <th class="p-5">Profissional</th>
+                                <th class="p-5">Função Judicial</th>
+                                <th class="p-5">Escala Horária</th>
+                                <th class="p-5 text-center w-20">Ações</th>
                             </tr>
                         </thead>
-                        <tbody id="membersList" class="text-sm"></tbody>
+                        <tbody id="membersList" class="text-sm divide-y divide-slate-50"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- RECRUTAMENTO -->
+        <!-- CADASTRO (Membros) -->
         <section id="recrutamento" class="tab-content space-y-6">
-            <div class="max-w-2xl mx-auto glass-card p-8">
-                <div class="border-b pb-4 mb-6">
-                    <h2 class="text-2xl font-black text-slate-900">Cadastrar Profissional</h2>
-                    <p class="text-sm text-slate-500">Insira os dados do trabalhador designado pela capital.</p>
+            <div class="max-w-xl mx-auto glass-card p-8 border-t-4 border-slate-900">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-black text-slate-900 tracking-tight">Novo Registro</h2>
+                    <p class="text-xs text-slate-400 uppercase font-bold tracking-widest mt-1 italic">Designação para <span class="cityNameDisplay text-indigo-600">...</span></p>
                 </div>
-                <form id="addMemberForm" class="space-y-4">
+                <form id="addMemberForm" class="space-y-5">
                     <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Nome Completo</label>
-                        <input type="text" id="mName" class="w-full p-3 bg-slate-50 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="João da Silva" required>
+                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Nome do Profissional</label>
+                        <input type="text" id="mName" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Nome Completo" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Cargo</label>
-                        <select id="mRole" class="w-full p-3 bg-slate-50 border rounded-lg outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Cargo Judicial</label>
+                        <select id="mRole" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 appearance-none font-medium">
                             <option>Escrevente Judicial</option>
                             <option>Oficial de Justiça</option>
                             <option>Assessor de Gabinete</option>
                             <option>Segurança Institucional</option>
                             <option>Conciliador</option>
+                            <option>Técnico Judiciário</option>
                         </select>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Início do Expediente</label>
-                            <input type="time" id="mStart" class="w-full p-3 bg-slate-50 border rounded-lg" required>
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Entrada</label>
+                            <input type="time" id="mStart" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Fim do Expediente</label>
-                            <input type="time" id="mEnd" class="w-full p-3 bg-slate-50 border rounded-lg" required>
+                            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Saída</label>
+                            <input type="time" id="mEnd" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl font-mono text-sm" required>
                         </div>
                     </div>
-                    <button type="submit" class="w-full bg-slate-900 text-white p-4 rounded-lg font-bold hover:bg-indigo-600 transition flex justify-center items-center gap-2">
-                        <i class="fas fa-save"></i> ARQUIVAR NA NUVEM
+                    <button type="submit" class="w-full btn-primary text-white p-4 rounded-xl font-black text-sm uppercase tracking-widest flex justify-center items-center gap-3">
+                        <i class="fas fa-cloud-upload-alt"></i> Salvar na Nuvem
                     </button>
                 </form>
             </div>
         </section>
 
-        <!-- VAGAS -->
+        <!-- SOLICITAÇÃO (Vagas) -->
         <section id="vagas" class="tab-content space-y-6">
             <div class="grid md:grid-cols-2 gap-8">
-                <div class="glass-card p-6 h-fit border-t-4 border-emerald-500">
-                    <h2 class="text-xl font-bold mb-2 text-slate-900">Solicitar Reforço à Capital</h2>
-                    <p class="text-xs text-slate-500 mb-6 font-medium">Sua solicitação será listada no banco de dados estadual do ATJ.</p>
+                <div class="glass-card p-8 border-t-4 border-emerald-500">
+                    <h2 class="text-xl font-black text-slate-900 tracking-tight">Reportar Carência</h2>
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-8 mt-1">Envio imediato para Painel da Capital</p>
                     <form id="vagaForm" class="space-y-4">
-                        <input type="text" id="vTitle" placeholder="Cargo Necessário" class="w-full p-3 bg-slate-50 border rounded-lg outline-none" required>
-                        <textarea id="vDesc" placeholder="Justificativa da carência..." class="w-full p-3 bg-slate-50 border rounded-lg outline-none" rows="4"></textarea>
-                        <button type="submit" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold hover:bg-emerald-700 transition">
-                            PUBLICAR PARA O ESTADO
+                        <input type="text" id="vTitle" placeholder="Qual cargo está em falta?" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" required>
+                        <textarea id="vDesc" placeholder="Descreva o motivo da urgência ou detalhes da vaga..." class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500" rows="4"></textarea>
+                        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-emerald-50">
+                            Publicar Demanda de <span class="stateDisplay">...</span>
                         </button>
                     </form>
                 </div>
 
                 <div class="space-y-4">
-                    <h3 class="font-black text-slate-400 uppercase text-[10px] tracking-widest">Painel de Carências Locais</h3>
-                    <div id="vagasList" class="space-y-3"></div>
+                    <h3 class="font-black text-slate-400 uppercase text-[10px] tracking-[0.2em] px-2 flex items-center gap-2">
+                        <i class="fas fa-broadcast-tower animate-pulse text-emerald-500"></i> Demandas Ativas no Nó
+                    </h3>
+                    <div id="vagasList" class="space-y-4"></div>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- UI Feedback -->
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-8 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-10 z-[100] font-bold text-sm">
-        Sincronizado com Sucesso
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-10 z-[100] font-black text-[10px] uppercase tracking-widest flex items-center gap-3">
+        <i class="fas fa-check-circle text-emerald-400 text-lg"></i>
+        <span id="toastMsg">Sincronizado</span>
     </div>
 
-    <!-- Firebase Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, onSnapshot, query, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, addDoc, onSnapshot, query, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
@@ -161,7 +209,9 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'atj-judicial-v1';
 
         let currentUser = null;
+        let cityData = { nome: "", estado: "" };
 
+        // Inicialização de Autenticação com Fallback
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -170,50 +220,99 @@
                     await signInAnonymously(auth);
                 }
             } catch (error) {
-                console.error("Cloud Error:", error);
-                document.getElementById('authStatus').innerText = "ERRO DE CONEXÃO";
+                document.getElementById('authStatus').innerText = "ERRO SINCRONIZAÇÃO";
             }
         };
 
-        onAuthStateChanged(auth, (user) => {
+        // Ouvinte de Estado de Autenticação
+        onAuthStateChanged(auth, async (user) => {
             currentUser = user;
             if (user) {
-                document.getElementById('authStatus').innerHTML = `SISTEMA ATJ ATIVO: ${user.uid.substring(0,8).toUpperCase()}`;
-                setupSync(user.uid);
+                document.getElementById('authStatus').innerHTML = `NÓ ID: ${user.uid.substring(0,6).toUpperCase()}`;
+                await checkLocation(user.uid);
             }
         });
 
-        initAuth();
+        // Verificação de Configuração Regional (Cidade/Estado)
+        async function checkLocation(uid) {
+            const configRef = doc(db, 'artifacts', appId, 'users', uid, 'config', 'identificacao');
+            const docSnap = await getDoc(configRef);
 
+            if (docSnap.exists()) {
+                cityData = docSnap.data();
+                updateUIWithLocation();
+                setupSync(uid);
+            } else {
+                document.getElementById('setupOverlay').classList.remove('hidden');
+            }
+        }
+
+        // Formulário de Configuração Inicial
+        document.getElementById('setupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const nome = document.getElementById('setupCity').value;
+            const estado = document.getElementById('setupState').value.toUpperCase();
+
+            cityData = { nome, estado };
+            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'config', 'identificacao'), cityData);
+            
+            document.getElementById('setupOverlay').classList.add('hidden');
+            updateUIWithLocation();
+            setupSync(currentUser.uid);
+            notify("Nó regional ativado!");
+        });
+
+        function updateUIWithLocation() {
+            const display = `${cityData.nome} / ${cityData.estado}`;
+            document.getElementById('locationDisplay').innerText = `CONECTADO: ${display}`;
+            
+            document.querySelectorAll('.cityNameDisplay').forEach(el => el.innerText = cityData.nome);
+            document.querySelectorAll('.stateDisplay').forEach(el => el.innerText = cityData.estado);
+        }
+
+        // Sincronização em Tempo Real (Firestore)
         function setupSync(uid) {
-            // Membros
+            // Membros da Comarca
             onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'membros'), (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 document.getElementById('statTotal').innerText = data.length;
                 renderMembers(data);
-            });
+            }, (error) => console.error("Erro Membros:", error));
 
-            // Vagas
+            // Vagas Públicas (Carências)
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'carências'), (snap) => {
                 const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 document.getElementById('statVagas').innerText = data.length;
                 renderVagas(data);
-            });
+            }, (error) => console.error("Erro Vagas:", error));
         }
 
         function renderMembers(data) {
             const list = document.getElementById('membersList');
             if (data.length === 0) {
-                list.innerHTML = `<tr><td colspan="4" class="p-10 text-center text-slate-400">Nenhum profissional arquivado.</td></tr>`;
+                list.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-slate-300 font-bold uppercase text-[10px] tracking-widest italic">Nenhum registro encontrado em ${cityData.nome}</td></tr>`;
                 return;
             }
             list.innerHTML = data.map(m => `
-                <tr class="border-b hover:bg-slate-50 transition">
-                    <td class="p-4 font-bold text-slate-800">${m.nome}</td>
-                    <td class="p-4 text-slate-600 font-medium">${m.cargo}</td>
-                    <td class="p-4"><span class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-[11px] font-mono">${m.horario}</span></td>
-                    <td class="p-4 text-center">
-                        <button onclick="removeM('${m.id}')" class="text-slate-300 hover:text-red-500 transition"><i class="fas fa-trash-alt"></i></button>
+                <tr class="group hover:bg-indigo-50/30 transition-all">
+                    <td class="p-5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-all">
+                                <i class="fas fa-user-tie text-[10px]"></i>
+                            </div>
+                            <span class="font-bold text-slate-800 tracking-tight">${m.nome}</span>
+                        </div>
+                    </td>
+                    <td class="p-5 text-slate-500 font-medium text-xs uppercase">${m.cargo}</td>
+                    <td class="p-5">
+                        <span class="bg-white border border-slate-200 text-slate-600 px-3 py-1 rounded-full text-[10px] font-mono font-black">${m.horario}</span>
+                    </td>
+                    <td class="p-5 text-center">
+                        <button onclick="removeM('${m.id}')" class="text-slate-200 hover:text-red-500 transition-all p-2 rounded-lg hover:bg-red-50">
+                            <i class="fas fa-trash-alt text-xs"></i>
+                        </button>
                     </td>
                 </tr>
             `).join('');
@@ -222,47 +321,53 @@
         function renderVagas(data) {
             const list = document.getElementById('vagasList');
             if (data.length === 0) {
-                list.innerHTML = `<div class="p-6 border-2 border-dashed rounded-lg text-center text-slate-400 text-xs font-bold uppercase">Sem carências reportadas</div>`;
+                list.innerHTML = `<div class="p-10 border-2 border-dashed border-slate-200 rounded-3xl text-center text-slate-300 text-[10px] font-black uppercase tracking-widest">Painel de carências limpo</div>`;
                 return;
             }
             list.innerHTML = data.map(v => `
-                <div class="glass-card p-4 flex justify-between items-center border-l-4 border-emerald-500 shadow-sm">
-                    <div>
-                        <h4 class="font-bold text-slate-800 text-sm">${v.titulo}</h4>
-                        <p class="text-[11px] text-slate-500 italic">${v.descricao || 'Sem detalhes'}</p>
+                <div class="glass-card p-5 flex justify-between items-center border-l-4 border-emerald-500 hover:shadow-lg transition-all">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                             <h4 class="font-black text-slate-900 text-sm tracking-tight">${v.titulo}</h4>
+                             <span class="text-[8px] bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded font-black uppercase tracking-tighter">Ativo</span>
+                        </div>
+                        <p class="text-[9px] text-slate-400 font-black uppercase tracking-widest">${v.origem_cidade} • ${v.origem_estado}</p>
+                        <p class="text-xs text-slate-500 mt-2 italic leading-relaxed">${v.descricao || 'Sem justificativa detalhada.'}</p>
                     </div>
-                    <button onclick="removeV('${v.id}')" class="h-8 w-8 rounded-full hover:bg-red-50 text-slate-300 hover:text-red-500 transition flex items-center justify-center">
-                        <i class="fas fa-check"></i>
+                    <button onclick="removeV('${v.id}')" class="h-10 w-10 rounded-2xl bg-slate-50 text-slate-300 hover:bg-emerald-600 hover:text-white transition-all flex items-center justify-center shadow-inner">
+                        <i class="fas fa-check text-xs"></i>
                     </button>
                 </div>
             `).join('');
         }
 
-        // Global actions
+        // Ações Globais
         window.removeM = async (id) => {
-            if (!currentUser) return;
+            if (!currentUser || !confirm("Deseja realmente remover este registro judicial?")) return;
             await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'membros', id));
-            notify("Registro removido");
+            notify("Registro removido do nó");
         };
 
         window.removeV = async (id) => {
             if (!currentUser) return;
             await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'carências', id));
-            notify("Vaga preenchida/encerrada");
+            notify("Carência resolvida na capital");
         };
 
+        // Submissão de Formulários
         document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const data = {
                 nome: document.getElementById('mName').value,
                 cargo: document.getElementById('mRole').value,
                 horario: `${document.getElementById('mStart').value} - ${document.getElementById('mEnd').value}`,
+                municipio: cityData.nome,
                 timestamp: serverTimestamp()
             };
             await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'membros'), data);
             e.target.reset();
-            notify("Arquivado com Sucesso");
-            switchTab('dashboard');
+            notify("Arquivado com sucesso!");
+            switchTab('dashboard', document.querySelector('[onclick*="dashboard"]'));
         });
 
         document.getElementById('vagaForm').addEventListener('submit', async (e) => {
@@ -270,27 +375,35 @@
             const data = {
                 titulo: document.getElementById('vTitle').value,
                 descricao: document.getElementById('vDesc').value,
+                origem_cidade: cityData.nome,
+                origem_estado: cityData.estado,
                 timestamp: serverTimestamp()
             };
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'carências'), data);
             e.target.reset();
-            notify("Carência reportada à Capital");
+            notify("Demanda reportada à capital!");
         });
 
-        window.switchTab = (id) => {
+        // Navegação entre abas
+        window.switchTab = (id, btn) => {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            event.target.classList.add('active');
+            if(btn) btn.classList.add('active');
         };
 
         function notify(msg) {
             const t = document.getElementById('toast');
-            t.innerText = msg;
+            document.getElementById('toastMsg').innerText = msg;
             t.style.opacity = '1';
             t.style.transform = 'translateY(0) translateX(-50%)';
-            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateY(10px) translateX(-50%)'; }, 2500);
+            setTimeout(() => { 
+                t.style.opacity = '0'; 
+                t.style.transform = 'translateY(10px) translateX(-50%)'; 
+            }, 3000);
         }
+
+        initAuth();
     </script>
 </body>
 </html>
